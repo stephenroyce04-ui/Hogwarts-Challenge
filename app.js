@@ -8,22 +8,19 @@ let selectedParticipantId = null;
 const mapContainer = document.getElementById("map-container");
 const routeSVG = document.getElementById("route-svg");
 const routePath = document.getElementById("route-path");
-// =========================
-// GLOBAL STATE
-// =========================
+const addPlayerModal = document.getElementById("add-player-modal");
 
-const addPlayerModal = document.getElementById("add-player-modal"); // <-- and this
 /* =========================
    ROUTE DATA
 ========================= */
 
 const routeData = [
-  { id: 0, from: "Start", to: "Mew", distance: 0 },
-  { id: 1, from: "Mew", to: "Nellognall", distance: 22 },
-  { id: 2, from: "Nellognall", to: "Alab", distance: 21 },
-  { id: 3, from: "Alab", to: "Ualleglod", distance: 18 },
-  { id: 5, from: "Ualleglod", to: "Htellnyhcam", distance: 18 },
-  { id: 5, from: "Htellnyhcam", to: "Htywtsyreba", distance: 21 },
+  { id: 0, from: "Start", to: "The Bog", distance: 0 },
+  { id: 1, from: "The Bog", to: "South Hogwarts", distance: 44000 },
+  { id: 2, from: "South Hogwarts", to: "Feldcroft", distance: 42000 },
+  { id: 3, from: "Feldcroft", to: "Coastal Cavern", distance: 36000 },
+  { id: 4, from: "Coastal Cavern", to: "Marunweem", distance: 36000 },
+  { id: 5, from: "Marunweem", to: "Clagmar", distance: 42000 },
 ];
 
 /* =========================
@@ -67,19 +64,11 @@ function getStageBreakpoints() {
   let total = 0;
   const breakpoints = [];
 
-  // First visible location is Shire at 0 miles
-  breakpoints.push({
-    mile: 0,
-    label: routeData[0].to, // "Shire"
-  });
+  breakpoints.push({ mile: 0, label: routeData[0].to });
 
-  // Now add each subsequent "to" location at the end of its segment
   for (let i = 1; i < routeData.length; i++) {
     total += routeData[i].distance;
-    breakpoints.push({
-      mile: total,
-      label: routeData[i].to,
-    });
+    breakpoints.push({ mile: total, label: routeData[i].to });
   }
 
   return breakpoints;
@@ -98,10 +87,9 @@ function renderStageMarkers() {
 
     const marker = document.createElement("div");
     marker.className = "stage-marker";
-
     marker.innerHTML = `
       <div class="stage-label">${bp.label}</div>
-      <div class="stage-miles">${bp.mile} miles</div>
+      <div class="stage-miles">${bp.mile} steps</div>
     `;
 
     marker.style.left = `${screen.x}px`;
@@ -157,9 +145,10 @@ function updateTotalsPanel() {
 
   participants.forEach((p) => {
     const row = document.createElement("div");
+    row.classList.add("totals-row");
 
     row.innerHTML = `
-      <span>${p.name}: ${p.progress} miles</span>
+      <span>${p.name}: ${p.progress} Steps</span>
       <div class="player-controls">
         <button class="edit-btn" data-id="${p.id}">Edit</button>
         <button class="delete-btn" data-id="${p.id}">Delete</button>
@@ -169,23 +158,17 @@ function updateTotalsPanel() {
     panel.appendChild(row);
   });
 
-  // Wire up edit buttons
-  document.querySelectorAll(".edit-btn").forEach((btn) => {
+  panel.querySelectorAll(".edit-btn").forEach((btn) => {
     btn.onclick = () => openEditModal(btn.dataset.id);
   });
 
-  // Wire up delete buttons
-  document.querySelectorAll(".delete-btn").forEach((btn) => {
+  panel.querySelectorAll(".delete-btn").forEach((btn) => {
     btn.onclick = () => openDeleteModal(btn.dataset.id);
   });
 }
 
-window.addEventListener("resize", () => {
-  renderAllParticipantMarkers();
-  renderStageMarkers();
-});
 /* =========================
-   ADD PLAYER MODAL
+   ADD PLAYER
 ========================= */
 
 function openAddPlayerModal() {
@@ -217,13 +200,12 @@ function openAddPlayerModal() {
       id: crypto.randomUUID(),
       name,
       emoji: selected.dataset.emoji,
-      progress: 0, // always start at zero
+      progress: 0,
     });
 
     saveParticipants();
     closeModal(addPlayerModal);
 
-    // Clear inputs
     document.getElementById("new-player-name").value = "";
     document
       .querySelectorAll("#emoji-picker div")
@@ -238,9 +220,10 @@ function openAddPlayerModal() {
   document.getElementById("cancel-add-player").onclick = () =>
     closeModal(addPlayerModal);
 }
-// =========================
-// EDIT PLAYER
-// =========================
+
+/* =========================
+   EDIT PLAYER
+========================= */
 
 function openEditModal(id) {
   const p = participants.find((x) => x.id === id);
@@ -274,9 +257,10 @@ document.getElementById("confirm-edit-score").onclick = () => {
 
   closeModal(document.getElementById("edit-score-modal"));
 };
-// =========================
-// DELETE PLAYER
-// =========================
+
+/* =========================
+   DELETE PLAYER
+========================= */
 
 function openDeleteModal(id) {
   const p = participants.find((x) => x.id === id);
@@ -304,6 +288,7 @@ document.getElementById("confirm-delete-player").onclick = () => {
 
   closeModal(document.getElementById("delete-player-modal"));
 };
+
 /* =========================
    ACTIVITY LOGGING
 ========================= */
@@ -322,14 +307,13 @@ document.getElementById("activity-submit").onclick = () => {
   renderAllParticipantMarkers();
   renderStageMarkers();
 
-  // 🔥 Clear fields after adding activity
   document.getElementById("activity-participant-select").value = "";
-  document.getElementById("activity-type").value = "walking"; // optional reset
+  document.getElementById("activity-type").value = "walking";
   document.getElementById("activity-miles").value = "";
 };
 
 /* =========================
-   MODAL HELPERS
+   MODALS
 ========================= */
 
 function openModal(modal) {
@@ -339,9 +323,10 @@ function openModal(modal) {
 function closeModal(modal) {
   modal.classList.add("hidden");
 }
-// =========================
-// RESET CHALLENGE
-// =========================
+
+/* =========================
+   RESET CHALLENGE
+========================= */
 
 document.getElementById("reset-challenge-button").onclick = () => {
   openModal(document.getElementById("reset-challenge-modal"));
@@ -368,10 +353,12 @@ updateActivityDropdown();
 updateTotalsPanel();
 renderAllParticipantMarkers();
 renderStageMarkers();
-// =========================
-// EVENT WIRES
-// =========================
 
 document
   .getElementById("add-player-button")
   .addEventListener("click", openAddPlayerModal);
+
+window.addEventListener("resize", () => {
+  renderAllParticipantMarkers();
+  renderStageMarkers();
+});
